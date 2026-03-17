@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saan may Malunggay Hot Pandesal?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style>
+    :root {
+      --bg: #faf7f1;
+      --panel: rgba(255,255,255,.96);
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --green: #3f7d20;
+      --green-2: #6aa84f;
+      --bread: #8b5e34;
+      --soft: #f5efe2;
+      --shadow: 0 14px 40px rgba(0,0,0,.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    #app {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      height: 100vh;
+      width: 100%;
+    }
+
+    .sidebar {
+      overflow: auto;
+      background: linear-gradient(180deg, #fffdf8 0%, #f8f3ea 100%);
+      border-right: 1px solid rgba(0,0,0,.06);
+      padding: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(0,0,0,.05);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 10px 0 10px;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #385723;
+      background: #edf7e7;
+      border-radius: 999px;
+    }
+
+    .quote {
+      color: var(--bread);
+      font-weight: 600;
+      margin: 0 0 14px;
+    }
+
+    .muted { color: var(--muted); line-height: 1.6; }
+    .small { font-size: .92rem; }
+
+    .menu {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 14px 0 0;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: var(--ink);
+      background: #f4f4f5;
+      border: 1px solid var(--line);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: .92rem;
+      font-weight: 600;
+    }
+
+    .hero-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--green), var(--green-2));
+      color: #fff;
+      margin-top: 14px;
+    }
+
+    .secondary-btn {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      background: white;
+      color: var(--ink);
+      margin-top: 10px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat .value {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    ol {
+      padding-left: 1.25rem;
+      margin: 0;
+    }
+
+    li { margin-bottom: 10px; }
+
+    .recent-list {
+      display: grid;
+      gap: 10px;
+      max-height: 280px;
+      overflow: auto;
+    }
+
+    .recent-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .recent-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: .94rem;
+    }
+
+    .recent-item span {
+      display: block;
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.5;
+    }
+
+    .map-wrap {
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    .floating {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 700;
+      width: min(370px, calc(100% - 32px));
+      display: none;
+    }
+
+    .floating.show { display: block; }
+
+    .floating .panel { margin: 0; }
+
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: .9rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font: inherit;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .action-row button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font: inherit;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .save-btn {
+      background: var(--green);
+      color: white;
+    }
+
+    .close-btn {
+      background: #f3f4f6;
+      color: var(--ink);
+    }
+
+    .notice {
+      margin-top: 10px;
+      display: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: .9rem;
+    }
+
+    .notice.show { display: block; }
+    .notice.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .notice.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .legend {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    @media (max-width: 920px) {
+      #app { grid-template-columns: 1fr; }
+      .sidebar { max-height: 48vh; }
+      #map { height: 52vh; }
+    }
+
+	.hero-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+
+  border-radius: 12px;
+  background: white;
+  padding: 6px;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,.1);
+
+  margin-top: 4px;   /* pushes it slightly down */
+  margin-right: 4px; /* prevents edge overlap */
+
+  flex-shrink: 0;
+}
+
+.project-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.project-logo {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+
+  border-radius: 10px;
+  background: white;
+  padding: 5px;
+
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+
+  flex-shrink: 0;
+}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <section class="panel">
+  <div class="hero-row">
+    <div>
+      <span class="tag">Community Mapping Project</span>
+      <h1>Asa ang MALUNGGAY HOT PANDESAL?</h1>
+     <div class="project-row">
+  <img src="logo.png" alt="Logo" class="project-logo">
+  <p class="quote">
+    A project of the Department of Geodetic Engineering - USTP CDO
+  </p>
+</div>
+   
+        <p class="muted small">
+          A community-powered map of Malunggay Hot Pandesal sightings. See one? Help others find it by adding its location and time 		  spotted.
+        </p>
+        <div class="menu">
+          <a href="#instructions">Instructions</a>
+          <a href="#statistics">Statistics</a>
+          <a href="#about">About</a>
+        </div>
+        <button id="openFormBtn" class="hero-btn">Spotted Malunggay Hot Pandesal Stall</button>
+        <button id="useLocationBtn" class="secondary-btn">Use my current location</button>
+      </section>
+
+      <section class="panel" id="statistics">
+        <h2>Statistics</h2>
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Pins</div>
+            <div class="value" id="pinCount">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Latest</div>
+            <div class="value" id="latestSeen">—</div>
+          </div>
+        </div>
+        <p class="legend">Pins = reported pandesal stall sightings.</p>
+      </section>
+
+      <section class="panel" id="instructions">
+        <h2>How to use the map</h2>
+        <ol class="small muted">
+          <li>Find the location of the stall on the map. You can zoom in or use the current location button.</li>
+          <li>Click “Spotted Malunggay Hot Pandesal Stall”</strong></li>
+          <li>Click the exact location on the map. A marker will appear and the coordinates will be filled automatically.</li>
+          <li>Enter the landmark or place name, and the date and time when you saw it.</li>
+          <li>Submit the report to have it appear on the map and in the recent sightings list.</li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <h2>Recent sightings</h2>
+        <div class="recent-list" id="recentList"></div>
+      </section>
+
+      <section class="panel" id="about">
+        <h2>About</h2>
+        <p class="muted small">
+         This web-based map was created to support the community especially those who enjoy Malunggay Hot Pandesal by helping them easily 	locate nearby stalls. Since many vendors are mobile, this platform also aims to make their locations more visible and traceable in 	real time.
+        </p>
+        <p class="muted small">
+         This project was developed by the Department of Geodetic Engineering of USTP CDO in collaboration with USTP AGES YouthMappers and 	USTP GEARED UP, promoting community-driven mapping and the use of geospatial technologies for everyday needs.
+        </p>
+      </section>
+    </aside>
+
+    <main class="map-wrap">
+      <div id="map"></div>
+
+      <div class="floating" id="floatingForm">
+        <div class="panel">
+          <h2>Add sighting</h2>
+          <p class="muted small">Only three details are collected: location, coordinates, and time seen.</p>
+          <form id="sightingForm">
+            <div class="field">
+              <label for="location_name">Location / landmark</label>
+              <input id="location_name" type="text" placeholder="Example: Near Xavier University gate" required>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="latitude">Latitude</label>
+                <input id="latitude" type="number" step="any" required>
+              </div>
+              <div class="field">
+                <label for="longitude">Longitude</label>
+                <input id="longitude" type="number" step="any" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="seen_at">Date and time seen</label>
+              <input id="seen_at" type="datetime-local" required>
+            </div>
+            <div class="action-row">
+              <button type="submit" class="save-btn">Submit sighting</button>
+              <button type="button" class="close-btn" id="closeFormBtn">Close</button>
+            </div>
+          </form>
+          <div class="notice" id="messageBox"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module">
+    // =============================
+    // Replace these for live saving
+    // =============================
+    const SUPABASE_URL = "https://pbjrbogtudvgazeuehwo.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_3dton8Q-kRDLdTsxMIIfFA_DoO0GWf5";
+
+    // Demo entries appear when Supabase is not yet connected.
+    const demoSightings = [
+  {
+    id: 1,
+    location_name: "USTP-CDO",
+    latitude: 8.484679234765592,
+    longitude: 124.65664622291519,
+    seen_at: new Date().toISOString().split("T")[0] + "T07:00:00"
+  }
+];
+
+    const map = L.map("map").setView([8.4822, 124.6476], 15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+ 	 attribution: '&copy; OpenStreetMap &copy; CartoDB',
+  	subdomains: 'abcd',
+  	maxZoom: 19
+	}).addTo(map);
+
+
+    const markersLayer = L.layerGroup().addTo(map);
+    let tempMarker = null;
+    let hasLiveBackend = false;
+
+    const recentList = document.getElementById('recentList');
+    const pinCount = document.getElementById('pinCount');
+    const latestSeen = document.getElementById('latestSeen');
+    const floatingForm = document.getElementById('floatingForm');
+    const messageBox = document.getElementById('messageBox');
+    const form = document.getElementById('sightingForm');
+    const locationInput = document.getElementById('location_name');
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+    const seenAtInput = document.getElementById('seen_at');
+
+    document.getElementById('openFormBtn').addEventListener('click', () => {
+      floatingForm.classList.add('show');
+    });
+
+    document.getElementById('closeFormBtn').addEventListener('click', () => {
+      floatingForm.classList.remove('show');
+      hideMessage();
+    });
+
+    document.getElementById('useLocationBtn').addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showMessage('Geolocation is not supported by your browser.', 'err');
+        floatingForm.classList.add('show');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setTemporaryPoint(latitude, longitude);
+          map.setView([latitude, longitude], 16);
+          floatingForm.classList.add('show');
+          hideMessage();
+        },
+        () => {
+          floatingForm.classList.add('show');
+          showMessage('Could not get your current location.', 'err');
+        }
+      );
+    });
+
+    seenAtInput.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    function showMessage(text, type = 'ok') {
+      messageBox.textContent = text;
+      messageBox.className = `notice show ${type}`;
+    }
+
+    function hideMessage() {
+      messageBox.className = 'notice';
+      messageBox.textContent = '';
+    }
+
+    function formatDate(dateString) {
+      const d = new Date(dateString);
+      return d.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
+
+    function setTemporaryPoint(lat, lng) {
+      latInput.value = Number(lat).toFixed(6);
+      lngInput.value = Number(lng).toFixed(6);
+      if (tempMarker) map.removeLayer(tempMarker);
+      tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      tempMarker.on('dragend', () => {
+        const pos = tempMarker.getLatLng();
+        latInput.value = pos.lat.toFixed(6);
+        lngInput.value = pos.lng.toFixed(6);
+      });
+    }
+
+    map.on('click', (e) => {
+      floatingForm.classList.add('show');
+      setTemporaryPoint(e.latlng.lat, e.latlng.lng);
+    });
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function renderList(items) {
+      const sorted = [...items].sort((a, b) => new Date(b.seen_at) - new Date(a.seen_at));
+      markersLayer.clearLayers();
+      recentList.innerHTML = '';
+
+      pinCount.textContent = sorted.length;
+      latestSeen.textContent = sorted.length ? formatDate(sorted[0].seen_at) : '—';
+
+      if (!sorted.length) {
+        recentList.innerHTML = '<div class="recent-item"><span>No sightings yet.</span></div>';
+      }
+
+      sorted.forEach((item) => {
+        L.marker([item.latitude, item.longitude]).addTo(markersLayer)
+          .bindPopup(`
+            <strong>${escapeHtml(item.location_name)}</strong><br>
+            Seen: ${formatDate(item.seen_at)}<br>
+            Coords: ${Number(item.latitude).toFixed(6)}, ${Number(item.longitude).toFixed(6)}
+          `);
+
+        const el = document.createElement('div');
+        el.className = 'recent-item';
+        el.innerHTML = `
+          <strong>${escapeHtml(item.location_name)}</strong>
+          <span>Seen: ${formatDate(item.seen_at)}</span>
+          <span>${Number(item.latitude).toFixed(6)}, ${Number(item.longitude).toFixed(6)}</span>
+        `;
+        recentList.appendChild(el);
+      });
+    }
+
+    async function getSupabaseClient() {
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('YOUR_')) return null;
+      const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+      return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    async function loadSightings() {
+      const supabase = await getSupabaseClient();
+      if (!supabase) {
+        hasLiveBackend = false;
+        renderList(demoSightings);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('malunggay_sightings')
+        .select('id, location_name, latitude, longitude, seen_at')
+        .order('seen_at', { ascending: false });
+
+      if (error) {
+        hasLiveBackend = false;
+        console.error(error);
+        renderList(demoSightings);
+        showMessage('Live database not reachable. Showing demo data.', 'err');
+        return;
+      }
+
+      hasLiveBackend = true;
+      renderList(data || []);
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      hideMessage();
+
+      const payload = {
+        location_name: locationInput.value.trim(),
+        latitude: Number(latInput.value),
+        longitude: Number(lngInput.value),
+        seen_at: new Date(seenAtInput.value).toISOString()
+      };
+
+      if (!payload.location_name || Number.isNaN(payload.latitude) || Number.isNaN(payload.longitude) || !seenAtInput.value) {
+        showMessage('Please complete all fields first.', 'err');
+        return;
+      }
+
+      const supabase = await getSupabaseClient();
+      if (!supabase) {
+        demoSightings.unshift({ id: Date.now(), ...payload });
+        renderList(demoSightings);
+        resetForm();
+        showMessage('Saved in demo mode only. Add Supabase keys for public live saving.', 'ok');
+        return;
+      }
+
+      const { error } = await supabase.from('malunggay_sightings').insert([payload]);
+      if (error) {
+        console.error(error);
+        showMessage('Submission failed. Check your Supabase table and policies.', 'err');
+        return;
+      }
+
+      await loadSightings();
+      resetForm();
+      showMessage('Sighting submitted successfully.', 'ok');
+    });
+
+    function resetForm() {
+      form.reset();
+      seenAtInput.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      floatingForm.classList.remove('show');
+      if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+      }
+    }
+
+    loadSightings();
+  </script>
+</body>
+</html>
