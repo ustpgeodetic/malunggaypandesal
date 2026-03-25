@@ -437,7 +437,9 @@
       </div>
     </main>
   </div>
-
+<audio id="bgMusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script type="module">
     // =============================
@@ -445,7 +447,17 @@
     // =============================
     const SUPABASE_URL = "https://pbjrbogtudvgazeuehwo.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_3dton8Q-kRDLdTsxMIIfFA_DoO0GWf5";
+// 🎵 AUTO MUSIC (plays on first interaction)
+const music = document.getElementById("bgMusic");
+let isPlaying = false;
 
+document.addEventListener("click", () => {
+  if (!isPlaying) {
+    music.volume = 0.3; // softer volume (recommended)
+    music.play().catch(() => {});
+    isPlaying = true;
+  }
+}, { once: true });
     // Demo entries appear when Supabase is not yet connected.
     const demoSightings = [
   {
